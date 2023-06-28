@@ -27,7 +27,7 @@ jobs:
     - name: Publish
       run: dotnet publish
     - name: Zip
-      run: Compress-Archive -Path .\src\ImageResizerFunction\bin\Release\net6.0\publish\* -Destination Image-Resizer-Azure-Function-1-0-0.zip -Force
+      run: Compress-Archive -Path d:\a\Image-Resizer-Azure-Function\Image-Resizer-Azure-Function\src\ImageResizerFunction\bin\Release\net6.0\publish\* -Destination Image-Resizer-Azure-Function-1-0-0.zip -Force
     - uses: actions/checkout@v3
     - uses: ncipollo/release-action@v1
       with:
