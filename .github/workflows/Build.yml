@@ -28,3 +28,8 @@ jobs:
       run: dotnet publish
     - name: Zip
       run: Compress-Archive -Path .\src\ImageResizerFunction\bin\Release\net6.0\publish\* -Destination Image-Resizer-Azure-Function-1-0-0.zip -Force
+    - uses: actions/checkout@v3
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "Image-Resizer-Azure-Function-1-0-0.zip"
+ 
