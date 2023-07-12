@@ -31,7 +31,7 @@ jobs:
     - name: Zip
       run: zip -r Image-Resizer-Azure-Function-${{ github.ref_name }}.zip ./Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net6.0/publish/.
     - name: Create Release    
-    - uses: ncipollo/release-action@v1
+      uses: ncipollo/release-action@v1
       with:
         artifacts: "Image-Resizer-Azure-Function-${{ github.ref_name }}.zip"
  
