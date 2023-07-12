@@ -11,7 +11,7 @@ on:
 jobs:
   build:
    
-    runs-on: [windows-latest]
+    runs-on: [ubuntu-latest]
     
     permissions:
       contents: write
@@ -29,8 +29,8 @@ jobs:
     - name: Publish
       run: dotnet publish --configuration release
     - name: Zip
-      run: Compress-Archive -Path d:\a\Image-Resizer-Azure-Function\Image-Resizer-Azure-Function\src\ImageResizerFunction\bin\Release\net6.0\publish\* -Destination .\Image-Resizer-Azure-Function-${{ github.ref_name }}.zip -Force
-    - uses: actions/checkout@v3
+      run: zip -r Image-Resizer-Azure-Function-${{ github.ref_name }}.zip ./Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net6.0/publish/.
+    - name: Create Release    
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "Image-Resizer-Azure-Function-${{ github.ref_name }}.zip"
