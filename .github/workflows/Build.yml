@@ -29,7 +29,7 @@ jobs:
     - name: Publish
       run: dotnet publish --configuration release
     - name: Zip
-      run: zip -r Image-Resizer-Azure-Function-${{ github.ref_name }}.zip ./Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net6.0/publish/.
+      run: zip -r Image-Resizer-Azure-Function-${{ github.ref_name }}.zip /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net6.0/publish/
     - name: Create Release    
       uses: ncipollo/release-action@v1
       with:
