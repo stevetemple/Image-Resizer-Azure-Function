@@ -10,9 +10,11 @@ The intended use is to then sit this behind a CDN or have media requests routed 
 
 ## Setup 
 
+Add the new resources at Azure:
+
 [![Deploy to Azure](/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fstevetemple%2FImage-Resizer-Azure-Function%2Fmain%2Fazuredeploy.json)
 
-You'll need to setup 3 app settings:
+You'll need to setup 3 settings ready:
 
 `ImageConnectionString`
 The connection string to the blob containing the media to resize
@@ -23,7 +25,7 @@ The name of the container which contains the images you want to resize
 `CacheContainer`
 The name of the container to use a cache of the resized images
 
-The resizer uses the amazing ImageSharp to resize and will be listening on the path `/api/<pathtoimage>`
+The resizer uses the amazing ImageSharp to resize and will be listening on the path `/api/<pathtoimage>` so if in your container the image is at `media/1234/image.jpg` you'll want to pass `/api/media/1234/image.jpg?width=100`
 
 It supports the format, quality and resize commands from [ImageSharp.Web](https://docs.sixlabors.com/articles/imagesharp.web/processingcommands.html) passed in the querystring
 
