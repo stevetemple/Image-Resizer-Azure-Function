@@ -140,15 +140,15 @@
 						},
 						{
 							"name": "ImageConnectionString",
-							"value": "parameters('imageConnectionString')"
+							"value": "[parameters('imageConnectionString')]"
 						},
 						{
 							"name": "Container",
-							"value": "parameters('container')"
+							"value": "[parameters('container')]"
 						},
 						{
 							"name": "CacheContainer",
-							"value": "parameters('cacheContainer')"
+							"value": "[parameters('cacheContainer')]"
 						}
 					]
 				}
