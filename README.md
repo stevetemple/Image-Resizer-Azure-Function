@@ -10,7 +10,7 @@ The intended use is to then sit this behind a CDN or have media requests routed 
 
 ## Setup 
 
-[![Deploy to Azure](/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https://azuredeploy.json)
+[![Deploy to Azure](/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fstevetemple%2FImage-Resizer-Azure-Function%2Fmain%2Fazuredeploy.json)
 
 You'll need to setup 3 app settings:
 
