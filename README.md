@@ -2,9 +2,9 @@
 
 # Image Resizing Azure Function
 
-So you're running a website that has a bunch of media etc that gets resized on the site. This might not be ideal, image processing can be very CPU intensive and so it's nicer to shift that off to somewhere else and let Azure worry about scaling for it.
+If you're running a website that has a a lot of images/media etc that gets resized on demand as part of the site. You may find this might not be ideal, image processing can be very CPU intensive and so i've found it nicer to shift that off to somewhere else and let Azure worry about scaling for it.
 
-This will run an Azure Function that will do the Image Resizing for you without needing to run it on the website itself, it assumes that your media is on Azure Blob Storage and it'll take that resize it and cache the resized images back onto the blob storage.
+This will run an Azure Function that will do the image resizing and formatting for you without needing to run it on the website itself, it assumes that your media is on Azure Blob Storage and it'll take that resize it and cache the resized images back onto the blob storage.
 
 The intended use is to then sit this behind a CDN or have media requests routed to this function for sites sitting behind something like Azure Front Door.
 
@@ -33,9 +33,9 @@ It supports the format, quality and resize commands from [ImageSharp.Web](https:
 
 It's designed to sit behind a CDN that will do the caching. The function will resize on each request. 
 
-Setup the CDN to cache each unique URL (including querystring). 
+Make sure you setup the CDN to cache each unique URL (including querystring). 
 
-Also set the CDN to output cache headers to tell the client to cache for 365 days.
+This library sends headers to the CDN to tell it to cache for up to 365 days.
 
 ## License
 
