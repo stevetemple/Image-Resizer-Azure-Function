@@ -35,12 +35,6 @@
 				"description": "Location for Application Insights"
 			}
 		},
-		"linuxFxVersion": {
-			"type": "string",
-			"metadata": {
-				"description": "Required for Linux app to represent runtime stack in the format of 'runtime|runtimeVersion'. For example: 'python|3.9'"
-			}
-		},
 		"imageConnectionString": {
 			"type": "string",
 			"metadata": {
@@ -114,7 +108,7 @@
 				"reserved": true,
 				"serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
 				"siteConfig": {
-					"linuxFxVersion": "[parameters('linuxFxVersion')]",
+					"linuxFxVersion": "DOTNETCORE|6.0",
 					"appSettings": [
 						{
 							"name": "APPINSIGHTS_INSTRUMENTATIONKEY",
