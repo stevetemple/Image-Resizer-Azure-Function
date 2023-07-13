@@ -100,7 +100,7 @@
 		},
 		{
 			"type": "Microsoft.Web/sites",
-			"apiVersion": "2022-03-01",
+			"apiVersion": "2022-09-01",
 			"name": "[parameters('functionAppName')]",
 			"location": "[parameters('location')]",
 			"kind": "functionapp,linux",
