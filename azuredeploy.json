@@ -108,7 +108,7 @@
 				"reserved": true,
 				"serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
 				"siteConfig": {
-					"linuxFxVersion": "DOTNETCORE|6.0",
+					"linuxFxVersion": "DOTNETCORE:6.0",
 					"appSettings": [
 						{
 							"name": "APPINSIGHTS_INSTRUMENTATIONKEY",
