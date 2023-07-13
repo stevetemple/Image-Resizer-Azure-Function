@@ -2,7 +2,7 @@
 
 # Image Resizing Azure Function
 
-So you're running a website that has a bunch of media etc that gets resized on the site. This might not be ideal, image processing can be very CPU intensive, it's a potential DDoS attack vector and it's just plain nicer to shift that off to somewhere else.
+So you're running a website that has a bunch of media etc that gets resized on the site. This might not be ideal, image processing can be very CPU intensive and so it's nicer to shift that off to somewhere else and let Azure worry about scaling for it.
 
 This will run an Azure Function that will do the Image Resizing for you without needing to run it on the website itself, it assumes that your media is on Azure Blob Storage and it'll take that resize it and cache the resized images back onto the blob storage.
 
