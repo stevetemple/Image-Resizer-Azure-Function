@@ -34,3 +34,19 @@ It's designed to sit behind a CDN that will do the caching. The function will re
 Setup the CDN to cache each unique URL (including querystring). 
 
 Also set the CDN to output cache headers to tell the client to cache for 365 days.
+
+## License
+
+Copyright © [Steve Temple](https://github.com/stevetemple).
+
+All source code is licensed under the Mozilla Public License.
+
+## Acknowledgements
+
+### Developers
+
+Steve Temple - ([GitHub](https://github.com/stevetemple), [Mastodon](https://umbracocommunity.social/@steve_gibe), [Twitter](https://twitter.com/Steve_Gibe))
+
+### Dependencies
+
+This project is built entirely around and would not be possible without [ImageSharp](https://docs.sixlabors.com/articles/imagesharp/index.html) please check that out and [support them](https://github.com/SixLabors/ImageSharp#support-six-labors)
