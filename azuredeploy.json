@@ -136,7 +136,7 @@
 						},
 						{
 							"name": "WEBSITE_RUN_FROM_PACKAGE",
-							"value": "https://github.com/stevetemple/Image-Resizer-Azure-Function/releases/download/1.0.8/Image-Resizer-Azure-Function-1.0.8.zip"
+							"value": "https://github.com/stevetemple/Image-Resizer-Azure-Function/releases/download/2.0.1/Image-Resizer-Azure-Function-2.0.1.zip"
 						},
 						{
 							"name": "ImageConnectionString",
