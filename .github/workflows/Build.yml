@@ -12,6 +12,10 @@ jobs:
   build:
    
     runs-on: [ubuntu-latest]
+
+    env:
+      # ImageSharp 4 validates its licence at build time; Release builds fail without it.
+      SixLaborsLicenseKey: ${{ secrets.SIXLABORS_LICENSE_KEY }}
     
     permissions:
       contents: write
@@ -21,7 +25,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -30,7 +34,7 @@ jobs:
       run: dotnet publish --configuration release
     - name: Zip
       run: |
-        cd /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net6.0/publish/
+        cd /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net8.0/publish/
         zip -r /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function-${{ github.ref_name }}.zip .
         cd /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function
     - name: Create Release    
