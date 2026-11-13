@@ -31,10 +31,10 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish --configuration debug
+      run: dotnet publish --configuration release
     - name: Zip
       run: |
-        cd /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Debug/net8.0/publish/
+        cd /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net8.0/publish/
         zip -r /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function-${{ github.ref_name }}.zip .
         cd /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function
     - name: Create Release    
