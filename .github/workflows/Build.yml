@@ -31,7 +31,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish --configuration release
+      run: dotnet publish --configuration debug
     - name: Zip
       run: |
         cd /home/runner/work/Image-Resizer-Azure-Function/Image-Resizer-Azure-Function/src/ImageResizerFunction/bin/Release/net8.0/publish/
