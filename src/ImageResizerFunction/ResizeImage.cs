@@ -1,10 +1,10 @@
+using Azure;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
+using Azure.Storage.Blobs.Models;
 using ImageResizerFunction.ImageProcessors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SixLabors.ImageSharp.Web.Caching;
@@ -12,7 +12,6 @@ using SixLabors.ImageSharp.Web.Middleware;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Azure.Storage.Blobs.Models;
 
 namespace ImageResizerFunction
 {
@@ -20,107 +19,105 @@ namespace ImageResizerFunction
 	{
 		private const int CacheMinutes = 60 * 24; // 24 hours
 
+		private static readonly ICacheHash CacheHash = new SHA256CacheHash(Options.Create(new ImageSharpMiddlewareOptions()));
+
 		private readonly IImageProcessor[] _processors;
 
-		private readonly BlobContainerClient _container;
-		private readonly BlobContainerClient _cacheContainer;
+		private readonly ImageContainers _containers;
 
-		private readonly ICacheHash _cacheHash;
-
+		private readonly ILogger<ResizeImage> _log;
 
 		public ResizeImage(
+			ImageContainers containers,
+			ILogger<ResizeImage> log,
 			RasterImageProcessor rasterImageProcessor,
 			PassThroughImageProcessor passThroughImageProcessor)
 		{
+			_containers = containers;
+			_log = log;
 			_processors = new IImageProcessor[]
 			{
 				rasterImageProcessor,
 				passThroughImageProcessor,
 			};
-
-			var connectionString = Environment.GetEnvironmentVariable("ImageConnectionString");
-			var containerName = Environment.GetEnvironmentVariable("Container").ToLower();
-			var cacheContainerName = Environment.GetEnvironmentVariable("CacheContainer").ToLower();
-
-			_cacheHash = new SHA256CacheHash(Options.Create(new ImageSharpMiddlewareOptions()));
-
-			_cacheContainer = new BlobContainerClient(connectionString, cacheContainerName);
-			_container = new BlobContainerClient(connectionString, containerName);
 		}
 
-		[FunctionName("Resize")]
+		[Function("Resize")]
 		public async Task<IActionResult> Run(
 				[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "{*path}")] HttpRequest req,
-				string path,
-				ILogger log)
+				string path)
 		{
-			var key = _cacheHash.Create(path + req.HttpContext.Request.QueryString, 12);
-			
-			if (!await _cacheContainer.ExistsAsync())
+			var key = CacheHash.Create(path + req.HttpContext.Request.QueryString, 12);
+
+			// Cache hit: a single request returns content and properties together.
+			var cached = await TryDownloadAsync(_containers.Cache.GetBlobClient(key));
+			if (cached != null)
 			{
-				await _cacheContainer.CreateAsync();
-			}
-			
-			var cachedBlob = _cacheContainer.GetBlockBlobClient(key);
-			var cacheExists = await cachedBlob.ExistsAsync();
-			if (cacheExists.Value)
-			{
-				var cachedProperties = await cachedBlob.GetPropertiesAsync();
-				if (cachedProperties.Value.LastModified > DateTime.UtcNow.AddMinutes(-CacheMinutes))
+				if (cached.Details.LastModified > DateTimeOffset.UtcNow.AddMinutes(-CacheMinutes))
 				{
-					SetHeaders(req, cachedProperties.Value);
-					return new FileStreamResult(await cachedBlob.OpenReadAsync(), cachedProperties.Value.ContentType);
+					SetHeaders(req, cached.Details);
+					return new FileStreamResult(cached.Content, cached.Details.ContentType);
 				}
+
+				// Stale: drop the connection without reading the body.
+				cached.Dispose();
 			}
-			
-			var blob = _container.GetBlockBlobClient(path);
-			var exists = await blob.ExistsAsync();
-			if (!exists.Value)
+
+			// Cache miss: download the source, which also gives us the ETag/LastModified for the headers.
+			using var source = await TryDownloadAsync(_containers.Source.GetBlobClient(path));
+			if (source == null)
 			{
 				return new NotFoundResult();
 			}
-
-			var result = await blob.DownloadStreamingAsync();
 
 			IActionResult response = null;
 			foreach (var processor in _processors)
 			{
 				if (processor.IsValidForPath(path))
 				{
-					response = await processor.Process(path, req.HttpContext, result.Value.Content, log);
+					response = await processor.Process(path, req.HttpContext, source.Content, _log);
 					break;
 				}
 			}
-			
-			_ = UploadCache(key, response as FileContentResult).ContinueWith(CacheUploadFailed, TaskContinuationOptions.OnlyOnFaulted);
 
-			var properties = await blob.GetPropertiesAsync();
-			SetHeaders(req, properties.Value);
+			if (response is FileContentResult fileResponse)
+			{
+				_ = UploadCache(key, fileResponse).ContinueWith(CacheUploadFailed, TaskContinuationOptions.OnlyOnFaulted);
+			}
+
+			SetHeaders(req, source.Details);
 			return response;
 		}
 
-		private void SetHeaders(HttpRequest req, BlobProperties blobProperties)
+		private static async Task<BlobDownloadStreamingResult> TryDownloadAsync(BlobClient blob)
 		{
-			var lastModified = blobProperties.LastModified;
-			var etag = blobProperties.ETag;
+			try
+			{
+				return (await blob.DownloadStreamingAsync()).Value;
+			}
+			catch (RequestFailedException ex) when (ex.Status == 404)
+			{
+				// Blob (or container) does not exist.
+				return null;
+			}
+		}
 
-			req.HttpContext.Response.Headers.ETag = etag.ToString();
+		private static void SetHeaders(HttpRequest req, BlobDownloadDetails details)
+		{
+			req.HttpContext.Response.Headers.ETag = details.ETag.ToString();
 			req.HttpContext.Response.Headers.CacheControl = "public, max-age=31536000";
-			req.HttpContext.Response.Headers.LastModified = lastModified.ToString("R");
+			req.HttpContext.Response.Headers.LastModified = details.LastModified.ToString("R");
 		}
 
 		private async Task UploadCache(string key, FileContentResult response)
 		{
-			var blobClient = _cacheContainer.GetBlobClient(key);
-			await blobClient.DeleteIfExistsAsync();
-			using (var memoryStream = new MemoryStream(response.FileContents))
-			{
-				await blobClient.UploadAsync(memoryStream);
+			await _containers.EnsureCacheContainerAsync();
 
-			}
-			await blobClient.SetHttpHeadersAsync(new BlobHttpHeaders
+			// Upload overwrites by default and sets the content type in the same request.
+			using var content = new MemoryStream(response.FileContents, writable: false);
+			await _containers.Cache.GetBlobClient(key).UploadAsync(content, new BlobUploadOptions
 			{
-				ContentType = (response as FileContentResult).ContentType
+				HttpHeaders = new BlobHttpHeaders { ContentType = response.ContentType },
 			});
 		}
 

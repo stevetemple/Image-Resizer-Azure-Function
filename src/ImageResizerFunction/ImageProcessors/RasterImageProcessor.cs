@@ -51,7 +51,8 @@ namespace ImageResizerFunction.ImageProcessors
 				Stream blob,
 				ILogger log)
 		{
-			using var image = Image.Load(blob, out var imageFormat);
+			using var image = await Image.LoadAsync(blob);
+			var imageFormat = image.Metadata.DecodedImageFormat;
 			var parser = new QueryCollectionRequestParser();
 			var commands = parser.ParseRequestCommands(httpContext);
 
