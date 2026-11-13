@@ -10,13 +10,14 @@ namespace ImageResizerFunction.ImageProcessors
 {
 	public class PassThroughImageProcessor : IImageProcessor
 	{
-		public async Task<IActionResult> Process(string path, HttpContext httpContext, Stream blob, ILogger log)
-		{
-			var contentType = GetMimeType(Path.GetFileName(path));
-			var stream = new MemoryStream();
-			await blob.CopyToAsync(stream);
+		private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
 
-			return new FileContentResult(stream.ToArray(), contentType);
+		public Task<IActionResult> Process(string path, HttpContext httpContext, Stream blob, ILogger log)
+		{
+			// Stream the source straight through to the client rather than buffering it in memory.
+			// FileStreamResult disposes the stream once the response has been written.
+			var contentType = GetMimeType(Path.GetFileName(path));
+			return Task.FromResult<IActionResult>(new FileStreamResult(blob, contentType));
 		}
 
 		public bool IsValidForPath(string path)
@@ -24,9 +25,14 @@ namespace ImageResizerFunction.ImageProcessors
 			return true;
 		}
 
-		private string GetMimeType(string fileName)
+		public IActionResult Validate(string path, HttpContext httpContext) => null;
+
+		// The output is identical to the source blob, so caching it would only duplicate storage.
+		public string GetCacheIdentity(string path, HttpContext httpContext) => null;
+
+		private static string GetMimeType(string fileName)
 		{
-			return new FileExtensionContentTypeProvider().TryGetContentType(fileName, out var contentType)
+			return ContentTypeProvider.TryGetContentType(fileName, out var contentType)
 				? contentType
 				: MediaTypeNames.Application.Octet;
 		}
