@@ -1,3 +1,4 @@
+using Azure.Core;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using System;
@@ -25,10 +26,27 @@ namespace ImageResizerFunction
 				storageUrl += "/";
 			}
 
-			var credential = new DefaultAzureCredential(true);
+			var credential = CreateCredential();
 
 			Source = new BlobContainerClient(new Uri($"{storageUrl}{containerName}"), credential);
 			Cache = new BlobContainerClient(new Uri($"{storageUrl}{cacheContainerName}"), credential);
+		}
+
+		/// <summary>
+		/// Locally, use the developer's own sign-in directly. DefaultAzureCredential tries managed identity
+		/// first, and on a dev machine that can fail outright (rather than being skipped), which stops the
+		/// chain before it reaches the Azure CLI. Core Tools and Visual Studio set AZURE_FUNCTIONS_ENVIRONMENT
+		/// to Development; in Azure it is Production, where DefaultAzureCredential is kept unchanged.
+		/// </summary>
+		private static TokenCredential CreateCredential()
+		{
+			var environment = Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT");
+			if (string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase))
+			{
+				return new ChainedTokenCredential(new AzureCliCredential(), new VisualStudioCredential());
+			}
+
+			return new DefaultAzureCredential(true);
 		}
 
 		public BlobContainerClient Source { get; }
