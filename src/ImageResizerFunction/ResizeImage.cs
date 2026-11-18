@@ -212,27 +212,30 @@ namespace ImageResizerFunction
 		{
 			try
 			{
-				var result = await _containers.Source.GetBlobClient(path).DownloadStreamingAsync(new BlobDownloadOptions
+				var response = await _containers.Source.GetBlobClient(path).DownloadStreamingAsync(new BlobDownloadOptions
 				{
 					Conditions = conditions,
 				});
 
-				return new SourceDownload(StatusCodes.Status200OK, result.Value);
+				// A matched condition is not thrown as an error: the response has no body, and reading
+				// its Value throws, so the status has to be checked first.
+				var raw = response.GetRawResponse();
+				if (raw.Status == StatusCodes.Status304NotModified)
+				{
+					if (raw.Headers.ETag is { } etag && raw.Headers.TryGetValue("Last-Modified", out var lastModifiedHeader)
+						&& DateTimeOffset.TryParse(lastModifiedHeader, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var lastModified))
+					{
+						return new SourceDownload(StatusCodes.Status304NotModified, NotModifiedETag: etag, NotModifiedLastModified: lastModified);
+					}
+
+					return new SourceDownload(StatusCodes.Status304NotModified);
+				}
+
+				return new SourceDownload(StatusCodes.Status200OK, response.Value);
 			}
 			catch (RequestFailedException ex) when (ex.Status == StatusCodes.Status404NotFound)
 			{
 				return new SourceDownload(StatusCodes.Status404NotFound);
-			}
-			catch (RequestFailedException ex) when (ex.Status == StatusCodes.Status304NotModified)
-			{
-				var headers = ex.GetRawResponse()?.Headers;
-				if (headers?.ETag is { } etag && headers.Value.TryGetValue("Last-Modified", out var lastModifiedHeader)
-					&& DateTimeOffset.TryParse(lastModifiedHeader, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var lastModified))
-				{
-					return new SourceDownload(StatusCodes.Status304NotModified, NotModifiedETag: etag, NotModifiedLastModified: lastModified);
-				}
-
-				return new SourceDownload(StatusCodes.Status304NotModified);
 			}
 		}
 
